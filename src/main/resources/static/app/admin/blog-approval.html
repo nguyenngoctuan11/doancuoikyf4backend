@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Duyệt blog cộng đồng</title>
+  <link rel="stylesheet" href="/app/app.css"/>
+  <style>
+    .blog-table tr:hover { background-color: rgba(255,255,255,0.02); }
+    .status-chip { display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+    .status-chip.pending { background:#fbbf24; color:#1f2937; }
+    .status-chip.draft { background:#e5e7eb; color:#111827; }
+    .status-chip.published { background:#34d399; color:#0f172a; }
+    .status-chip.rejected { background:#f87171; color:#0f172a; }
+    .detail-box { border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:16px; background:rgba(15,23,42,0.45); min-height:360px; }
+    .detail-box h3 { margin:0; font-size:20px; }
+    .detail-box .meta { font-size:13px; color:#cbd5f5; margin:4px 0 16px; }
+    .detail-content { max-height:400px; overflow:auto; padding-right:8px; }
+    .detail-content p { line-height:1.6; margin-bottom:12px; }
+    .btn.small { padding:6px 10px; font-size:13px; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+    .empty-state { border:1px dashed rgba(255,255,255,0.2); padding:24px; text-align:center; border-radius:20px; color:#cbd5f5; }
+  </style>
+  <script type="module">
+    import { mountNav, mountAdminMenu, mountAdminUser, requireAuth, api } from '/app/app-common.js';
+
+    const state = {
+      posts: [],
+      selected: null,
+      detail: null,
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!requireAuth(['MANAGER'])) return;
+      mountNav('nav', 'compact');
+      mountAdminMenu('adminMenu', 'blog-approval');
+      mountAdminUser('adminUserCard');
+      document.getElementById('btnRefresh').addEventListener('click', loadPosts);
+      loadPosts();
+    });
+
+    async function loadPosts() {
+      renderList(true);
+      try {
+        const data = await api('/api/admin/blog/pending');
+        state.posts = Array.isArray(data) ? data : [];
+        if (!state.posts.length) {
+          state.selected = null;
+          state.detail = null;
+        }
+        renderList(false);
+      } catch (error) {
+        document.getElementById('blogBody').innerHTML =
+          `<tr><td colspan="6">Không thể tải dữ liệu: ${error?.message || error}</td></tr>`;
+      }
+    }
+
+    function renderList(isLoading = false) {
+      const body = document.getElementById('blogBody');
+      if (isLoading) {
+        body.innerHTML = '<tr><td colspan="6">Đang tải...</td></tr>';
+        return;
+      }
+      if (!state.posts.length) {
+        body.innerHTML = '<tr><td colspan="6">Chưa có bài viết chờ duyệt.</td></tr>';
+        renderDetail();
+        return;
+      }
+      body.innerHTML = state.posts
+        .map(
+          (post) => `
+          <tr data-id="${post.id}">
+            <td>#${post.id}</td>
+            <td>
+              <div class="title">${post.title || ''}</div>
+              <small class="muted">${post.slug || ''}</small>
+            </td>
+            <td>${post.authorName || ''}</td>
+            <td>${formatDate(post.submittedAt || post.createdAt)}</td>
+            <td><span class="status-chip ${post.status || ''}">${(post.status || '').toUpperCase()}</span></td>
+            <td class="actions">
+              <button class="btn xs" data-action="view" data-id="${post.id}">Xem</button>
+              <button class="btn xs ghost" data-action="approve" data-id="${post.id}">Duyệt</button>
+              <button class="btn xs danger" data-action="reject" data-id="${post.id}">Từ chối</button>
+            </td>
+          </tr>`,
+        )
+        .join('');
+
+      body.querySelectorAll('button[data-action]').forEach((btn) => {
+        btn.addEventListener('click', () => handleRowAction(btn.dataset.id, btn.dataset.action));
+      });
+
+      // auto-select first if nothing chosen
+      if (!state.selected && state.posts.length) {
+        selectPost(state.posts[0]);
+      }
+    }
+
+    function formatDate(value) {
+      if (!value) return '--';
+      try {
+        return new Date(value).toLocaleString('vi-VN');
+      } catch {
+        return value;
+      }
+    }
+
+    async function handleRowAction(id, action) {
+      if (action === 'view') {
+        const post = state.posts.find((p) => String(p.id) === String(id));
+        if (post) await selectPost(post);
+        return;
+      }
+      if (action === 'approve') {
+        if (!confirm('Duyệt bài viết này?')) return;
+        await mutatePost(id, 'approve');
+        return;
+      }
+      if (action === 'reject') {
+        const reason = prompt('Nhập lý do từ chối (tuỳ chọn):', '');
+        await mutatePost(id, 'reject', reason ? { reason } : null);
+      }
+    }
+
+    async function selectPost(post) {
+      state.selected = post;
+      renderDetail(true);
+      try {
+        const data = await api(`/api/admin/blog/${post.id}`);
+        state.detail = data;
+      } catch (error) {
+        state.detail = { error: error?.message || 'Không thể tải chi tiết.' };
+      }
+      renderDetail(false);
+    }
+
+    function renderDetail(loading = false) {
+      const host = document.getElementById('detailPanel');
+      if (loading) {
+        host.innerHTML = '<p class="muted">Đang tải chi tiết...</p>';
+        return;
+      }
+      if (!state.selected) {
+        host.innerHTML = '<div class="empty-state">Chọn một bài viết bên trái để xem nội dung chi tiết.</div>';
+        return;
+      }
+      if (state.detail?.error) {
+        host.innerHTML = `<div class="empty-state">${state.detail.error}</div>`;
+        return;
+      }
+      const post = state.detail || state.selected;
+      const contentHtml = (post.content || '').split(/\\n+/).map((line) => `<p>${line}</p>`).join('');
+      host.innerHTML = `
+        <div class="detail-box">
+          <h3>${post.title || ''}</h3>
+          <div class="meta">
+            <div>Tác giả: <strong>${post.authorName || 'Không rõ'}</strong></div>
+            <div>Gửi lúc: ${formatDate(post.submittedAt || post.createdAt)}</div>
+            ${post.rejectionReason ? `<div>Lý do gần nhất: ${post.rejectionReason}</div>` : ''}
+          </div>
+          <p class="muted">${post.summary || 'Không có mô tả ngắn.'}</p>
+          <div class="detail-content">${contentHtml || '<p>Chưa có nội dung.</p>'}</div>
+        </div>
+      `;
+    }
+
+    async function mutatePost(id, action, payload) {
+      const body = payload ? { method: 'POST', body: JSON.stringify(payload) } : { method: 'POST' };
+      try {
+        await api(`/api/admin/blog/${id}/${action}`, body);
+        state.posts = state.posts.filter((post) => String(post.id) !== String(id));
+        if (state.selected && String(state.selected.id) === String(id)) {
+          state.selected = null;
+          state.detail = null;
+        }
+        renderList(false);
+      } catch (error) {
+        alert(error?.message || `Không thể ${action} bài viết.`);
+      }
+    }
+  </script>
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <span class="eyebrow">Cộng đồng</span>
+        <strong>Duyệt blog</strong>
+        <p class="muted">Quản lý bài viết sinh viên, duyệt trước khi xuất bản.</p>
+      </div>
+      <div id="adminUserCard" class="admin-user-card"></div>
+      <nav id="adminMenu" class="admin-menu"></nav>
+      <div class="admin-sidebar-footer">
+        <a class="text-link" href="/app/index.html">← Về trang tổng quan</a>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <div id="nav" data-variant="compact"></div>
+      <main class="admin-content">
+        <div class="card">
+          <div class="flex-between" style="gap:12px; flex-wrap:wrap;">
+            <div>
+              <h1>Danh sách bài viết</h1>
+              <span class="muted small">Duyệt / từ chối các bài viết cộng đồng</span>
+            </div>
+            <div class="toolbar">
+              <button id="btnRefresh" class="btn ghost">Làm mới</button>
+            </div>
+          </div>
+          <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+            <div class="table-responsive">
+              <table class="table blog-table">
+                <thead>
+                  <tr><th>ID</th><th>Tiêu đề</th><th>Tác giả</th><th>Gửi lúc</th><th>Trạng thái</th><th>Thao tác</th></tr>
+                </thead>
+                <tbody id="blogBody"></tbody>
+              </table>
+            </div>
+            <section id="detailPanel" class="detail-box">
+              <div class="empty-state">Chọn một bài viết để xem nội dung và duyệt.</div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
