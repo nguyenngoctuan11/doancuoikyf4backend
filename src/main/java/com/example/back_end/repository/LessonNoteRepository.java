@@ -1,6 +1,4 @@
-﻿
 package com.example.back_end.repository;
-
 import com.example.back_end.model.LessonNote;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

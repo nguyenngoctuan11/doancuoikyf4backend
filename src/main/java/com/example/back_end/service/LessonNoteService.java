@@ -1,4 +1,4 @@
-﻿package com.example.back_end.service;
+package com.example.back_end.service;
 
 import com.example.back_end.dto.LessonNoteDtos;
 import com.example.back_end.model.Course;

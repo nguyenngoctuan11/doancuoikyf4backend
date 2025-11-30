@@ -1,4 +1,4 @@
-﻿package com.example.back_end.repository;
+package com.example.back_end.repository;
 
 import com.example.back_end.model.LessonNoteComment;
 import org.springframework.data.jpa.repository.JpaRepository;
