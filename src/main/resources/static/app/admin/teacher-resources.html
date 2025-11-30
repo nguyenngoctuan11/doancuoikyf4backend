@@ -1,9 +1,9 @@
-<!doctype html>
+Ôªø<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>T‡i li?u b‡i h?c</title>
+  <title>T√†i li?u b√†i h?c</title>
   <link rel="stylesheet" href="/app/app.css"/>
   <script type="module">
     import { mountNav, mountAdminMenu, mountAdminUser, api, token } from '/app/app-common.js';
@@ -61,7 +61,7 @@
     function renderFilters() {
       const courseSelect = document.getElementById('filterCourse');
       if (courseSelect) {
-        courseSelect.innerHTML = ['<option value="">Ch?n khÛa h?c</option>']
+        courseSelect.innerHTML = ['<option value="">Ch?n kh√≥a h?c</option>']
           .concat(
             state.courses.map(
               (c) => `<option value="${c.id}">${c.title || c.slug || 'Course #' + c.id}</option>`,
@@ -73,10 +73,10 @@
       const lessonSelect = document.getElementById('filterLesson');
       if (lessonSelect) {
         if (!state.lessons.length) {
-          lessonSelect.innerHTML = '<option value="">Chua cÛ b‡i h?c</option>';
+          lessonSelect.innerHTML = '<option value="">Chua c√≥ b√†i h?c</option>';
         } else {
           lessonSelect.innerHTML =
-            '<option value="">T?t c? b‡i h?c</option>' +
+            '<option value="">T?t c? b√†i h?c</option>' +
             state.lessons
               .map((l) => `<option value="${l.id}">${l.title}</option>`)
               .join('');
@@ -89,7 +89,7 @@
       }
       const loadingIndicator = document.getElementById('lessonLoadingHint');
       if (loadingIndicator) {
-        loadingIndicator.textContent = state.lessonsLoading ? '–ang t?i b‡i h?c...' : '';
+        loadingIndicator.textContent = state.lessonsLoading ? '√êang t?i b√†i h?c...' : '';
       }
     }
 
@@ -119,16 +119,16 @@
       if (!host) return;
       if (!state.filterCourse || !state.filterLesson) {
         host.innerHTML =
-          '<div class="empty">Ch?n khÛa h?c v‡ b‡i h?c d? xem danh s·ch t‡i li?u.</div>';
+          '<div class="empty">Ch?n kh√≥a h?c v√† b√†i h?c d? xem danh s√°ch t√†i li?u.</div>';
         return;
       }
       if (state.loading) {
-        host.innerHTML = '<div class="empty">–ang t?i danh s·ch...</div>';
+        host.innerHTML = '<div class="empty">√êang t?i danh s√°ch...</div>';
         return;
       }
       if (!state.resources.length) {
         host.innerHTML =
-          '<div class="empty empty-card">Chua cÛ t‡i li?u n‡o ph˘ h?p b? l?c.</div>';
+          '<div class="empty empty-card">Chua c√≥ t√†i li?u n√†o ph√π h?p b? l?c.</div>';
         return;
       }
       host.innerHTML = state.resources
@@ -144,35 +144,35 @@
               : 'badge-warning';
           const statusLabel =
             {
-              approved: '–„ duy?t',
+              approved: '√ê√£ duy?t',
               rejected: 'T? ch?i',
-              hidden: '–„ ?n',
-              pending: '–ang ch?',
-            }[status] || '–ang ch?';
+              hidden: '√ê√£ ?n',
+              pending: '√êang ch?',
+            }[status] || '√êang ch?';
           const visibility = (res.visibility || 'enrolled').toLowerCase();
           const visibilityLabel =
             {
-              enrolled: 'H?c viÍn d„ ghi danh',
-              public: 'CÙng khai',
-              instructors: 'Ch? gi?ng viÍn',
+              enrolled: 'H?c vi√™n d√£ ghi danh',
+              public: 'C√¥ng khai',
+              instructors: 'Ch? gi?ng vi√™n',
             }[visibility] || visibility;
-          const typeLabel = res.sourceType === 'link' ? 'LiÍn k?t' : 'T?p tin';
+          const typeLabel = res.sourceType === 'link' ? 'Li√™n k?t' : 'T·∫≠p tin';
           const owner = res.createdBy?.name || '---';
           const createdAt = formatDate(res.createdAt);
           return `
             <article class="card resource-card">
               <header class="resource-header">
                 <div>
-                  <p class="resource-title">${escapeHtml(res.title || 'T‡i li?u')}</p>
+                  <p class="resource-title">${escapeHtml(res.title || 'T√†i li?u')}</p>
                   <p class="muted tiny">${escapeHtml(res.description || '')}</p>
                   <div class="resource-meta">
                     <span>${typeLabel}</span>
-                    <span>ï Ph?m vi: ${visibilityLabel}</span>
-                    <span>ï ${res.downloadCount || 0} lu?t t?i</span>
+                    <span>‚Ä¢ Ph?m vi: ${visibilityLabel}</span>
+                    <span>‚Ä¢ ${res.downloadCount || 0} lu?t t?i</span>
                   </div>
                   <div class="resource-meta">
                     <span>Ngu?i t?o: ${escapeHtml(owner)}</span>
-                    ${createdAt ? `<span>ï T?i lÍn ${createdAt}</span>` : ''}
+                    ${createdAt ? `<span>‚Ä¢ T?i l√™n ${createdAt}</span>` : ''}
                   </div>
                 </div>
                 <span class="badge ${badge}">${statusLabel}</span>
@@ -225,7 +225,7 @@
       const uploadInfo = document.getElementById('uploadInfo');
       if (uploadInfo) {
         uploadInfo.textContent = state.form.fileInfo
-          ? `–„ t?i: ${state.form.fileInfo.name || 'file'}`
+          ? `√ê√£ t?i: ${state.form.fileInfo.name || 'file'}`
           : '';
       }
       document.getElementById('fileFields').style.display = state.form.type === 'file' ? 'block' : 'none';
@@ -238,7 +238,7 @@
         setState({ courses: Array.isArray(list) ? list : [] });
       } catch (err) {
         setState({ courses: [] });
-        alert(err?.message || 'KhÙng t?i du?c danh s·ch khÛa h?c');
+        alert(err?.message || 'Kh√¥ng t?i du?c danh s√°ch kh√≥a h?c');
       }
     }
 
@@ -261,7 +261,7 @@
         setState({ lessons, lessonsLoading: false });
       } catch {
         setState({ lessons: [], lessonsLoading: false });
-        alert('KhÙng t?i du?c b‡i h?c.');
+        alert('Kh√¥ng t?i du?c b√†i h?c.');
       }
     }
 
@@ -284,7 +284,7 @@
         setState({ resources: data, loading: false });
       } catch (err) {
         setState({ resources: [], loading: false });
-        alert(err?.message || 'KhÙng t?i du?c t‡i li?u');
+        alert(err?.message || 'Kh√¥ng t?i du?c t√†i li?u');
       }
     }
 
@@ -297,7 +297,7 @@
         });
         fetchResources();
       } catch (err) {
-        alert(err?.message || 'KhÙng th? c?p nh?t tr?ng th·i');
+        alert(err?.message || 'Kh√¥ng th? c?p nh?t tr?ng th√°i');
       }
     }
 
@@ -309,10 +309,10 @@
           const absolute = url.startsWith('http') ? url : `${location.origin}${url}`;
           window.open(absolute, '_blank');
         } else {
-          alert('KhÙng tÏm th?y du?ng d?n t‡i li?u');
+          alert('Kh√¥ng t√¨m th?y du?ng d?n t√†i li?u');
         }
       } catch (err) {
-        alert(err?.message || 'KhÙng th? m? t‡i li?u');
+        alert(err?.message || 'Kh√¥ng th? m? t√†i li?u');
       }
     }
 
@@ -343,18 +343,18 @@
         });
       } catch (err) {
         setForm({ uploading: false, fileInfo: null, storagePath: '', url: '' });
-        alert(err?.message || 'Upload khÙng th‡nh cÙng');
+        alert(err?.message || 'Upload kh√¥ng th√†nh c√¥ng');
       }
     }
 
     async function submitResource() {
       if (!state.filterCourse || !state.filterLesson) {
-        alert('Ch?n khÛa h?c v‡ b‡i h?c tru?c khi t?i lÍn.');
+        alert('Ch?n kh√≥a h?c v√† b√†i h?c tru?c khi t?i l√™n.');
         return;
       }
       const title = state.form.title.trim();
       if (!title) {
-        alert('Nh?p tiÍu d? t‡i li?u');
+        alert('Nh?p ti√™u d? t√†i li?u');
         return;
       }
       const body = {
@@ -365,7 +365,7 @@
       };
       if (state.form.type === 'file') {
         if (!state.form.storagePath || !state.form.url) {
-          alert('H„y t?i t?p tru?c khi luu.');
+          alert('H√£y t?i t?p tru?c khi luu.');
           return;
         }
         body.storagePath = state.form.storagePath;
@@ -374,7 +374,7 @@
         body.fileSize = state.form.fileInfo?.size;
       } else {
         if (!state.form.externalUrl.trim()) {
-          alert('Nh?p du?ng d?n liÍn k?t');
+          alert('Nh?p du?ng d?n li√™n k?t');
           return;
         }
         body.externalUrl = state.form.externalUrl.trim();
@@ -384,7 +384,7 @@
           method: 'POST',
           body: JSON.stringify(body),
         });
-        alert('–„ thÍm t‡i li?u (dang ch? duy?t).');
+        alert('√ê√£ th√™m t√†i li?u (dang ch? duy?t).');
         setForm({
           title: '',
           description: '',
@@ -398,7 +398,7 @@
         });
         fetchResources();
       } catch (err) {
-        alert(err?.message || 'KhÙng th? thÍm t‡i li?u');
+        alert(err?.message || 'Kh√¥ng th? th√™m t√†i li?u');
       }
     }
 
@@ -460,7 +460,7 @@
     .hero-side { background:rgba(15,23,42,0.45); border:1px solid rgba(148,163,184,0.2); border-radius:22px; padding:20px; color:#f8fafc; }
     .hero-checklist { list-style:none; padding:0; margin:12px 0 0; display:flex; flex-direction:column; gap:8px; }
     .hero-checklist li { font-size:0.9rem; color:#e2e8f0; padding-left:20px; position:relative; }
-    .hero-checklist li::before { content:'ï'; position:absolute; left:0; color:#a5b4fc; }
+    .hero-checklist li::before { content:'‚Ä¢'; position:absolute; left:0; color:#a5b4fc; }
     .hero-progress { margin-top:18px; display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; }
     .hero-number { font-size:2.2rem; font-weight:600; color:#fff; display:block; }
     .hero-note { color:#c7d2fe; margin:4px 0 0; }
@@ -480,3 +480,4 @@
     .resource-card { border-radius: 18px; border: 1px solid rgba(148,163,184,0.25); padding: 20px; background: #fff; box-shadow: 0 15px 40px rgba(15,23,42,0.15); }
     .resource-header { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
     .resource-title { font-size:1.
+

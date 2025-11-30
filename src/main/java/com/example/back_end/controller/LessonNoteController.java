@@ -1,4 +1,4 @@
-﻿package com.example.back_end.controller;
+package com.example.back_end.controller;
 
 import com.example.back_end.dto.LessonNoteDtos;
 import com.example.back_end.model.User;
