@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Tài li?u bài h?c</title>
+  <title>Tài liệu bài học</title>
   <link rel="stylesheet" href="/app/app.css"/>
   <script type="module">
     import { mountNav, mountAdminMenu, mountAdminUser, api, token } from '/app/app-common.js';
@@ -30,6 +30,11 @@
         uploading: false,
       },
     };
+
+    function truncateType(value){
+      const str = (value || '').toString();
+      return str.length > 80 ? str.slice(0,80) : str;
+    }
 
     function setState(patch) {
       Object.assign(state, patch);
@@ -61,7 +66,7 @@
     function renderFilters() {
       const courseSelect = document.getElementById('filterCourse');
       if (courseSelect) {
-        courseSelect.innerHTML = ['<option value="">Ch?n khóa h?c</option>']
+        courseSelect.innerHTML = ['<option value="">Chọn khóa học</option>']
           .concat(
             state.courses.map(
               (c) => `<option value="${c.id}">${c.title || c.slug || 'Course #' + c.id}</option>`,
@@ -73,10 +78,10 @@
       const lessonSelect = document.getElementById('filterLesson');
       if (lessonSelect) {
         if (!state.lessons.length) {
-          lessonSelect.innerHTML = '<option value="">Chua có bài h?c</option>';
+          lessonSelect.innerHTML = '<option value="">Chưa có bài học</option>';
         } else {
           lessonSelect.innerHTML =
-            '<option value="">T?t c? bài h?c</option>' +
+            '<option value="">Tất cả bài học</option>' +
             state.lessons
               .map((l) => `<option value="${l.id}">${l.title}</option>`)
               .join('');
@@ -89,7 +94,7 @@
       }
       const loadingIndicator = document.getElementById('lessonLoadingHint');
       if (loadingIndicator) {
-        loadingIndicator.textContent = state.lessonsLoading ? 'Ðang t?i bài h?c...' : '';
+        loadingIndicator.textContent = state.lessonsLoading ? 'Đang tải bài học...' : '';
       }
     }
 
@@ -119,16 +124,16 @@
       if (!host) return;
       if (!state.filterCourse || !state.filterLesson) {
         host.innerHTML =
-          '<div class="empty">Ch?n khóa h?c và bài h?c d? xem danh sách tài li?u.</div>';
+          '<div class="empty">Chọn khóa học và bài học để xem danh sách tài liệu.</div>';
         return;
       }
       if (state.loading) {
-        host.innerHTML = '<div class="empty">Ðang t?i danh sách...</div>';
+        host.innerHTML = '<div class="empty">Đang tải danh sách...</div>';
         return;
       }
       if (!state.resources.length) {
         host.innerHTML =
-          '<div class="empty empty-card">Chua có tài li?u nào phù h?p b? l?c.</div>';
+          '<div class="empty empty-card">Chưa có tài liệu nào phù hợp bộ lọc.</div>';
         return;
       }
       host.innerHTML = state.resources
@@ -144,35 +149,35 @@
               : 'badge-warning';
           const statusLabel =
             {
-              approved: 'Ðã duy?t',
-              rejected: 'T? ch?i',
-              hidden: 'Ðã ?n',
-              pending: 'Ðang ch?',
-            }[status] || 'Ðang ch?';
+              approved: 'Đã duyệt',
+              rejected: 'Từ chối',
+              hidden: 'Đã ẩn',
+              pending: 'Đang chờ',
+            }[status] || 'Đang chờ';
           const visibility = (res.visibility || 'enrolled').toLowerCase();
           const visibilityLabel =
             {
-              enrolled: 'H?c viên dã ghi danh',
+              enrolled: 'Học viên đã ghi danh',
               public: 'Công khai',
-              instructors: 'Ch? gi?ng viên',
+              instructors: 'Chỉ giảng viên',
             }[visibility] || visibility;
-          const typeLabel = res.sourceType === 'link' ? 'Liên k?t' : 'Tập tin';
+          const typeLabel = res.sourceType === 'link' ? 'Liên kết' : 'Tập tin';
           const owner = res.createdBy?.name || '---';
           const createdAt = formatDate(res.createdAt);
           return `
             <article class="card resource-card">
               <header class="resource-header">
                 <div>
-                  <p class="resource-title">${escapeHtml(res.title || 'Tài li?u')}</p>
+                  <p class="resource-title">${escapeHtml(res.title || 'Tài liệu')}</p>
                   <p class="muted tiny">${escapeHtml(res.description || '')}</p>
                   <div class="resource-meta">
                     <span>${typeLabel}</span>
-                    <span>• Ph?m vi: ${visibilityLabel}</span>
-                    <span>• ${res.downloadCount || 0} lu?t t?i</span>
+                    <span>• Phạm vi: ${visibilityLabel}</span>
+                    <span>• ${res.downloadCount || 0} lượt tải</span>
                   </div>
                   <div class="resource-meta">
-                    <span>Ngu?i t?o: ${escapeHtml(owner)}</span>
-                    ${createdAt ? `<span>• T?i lên ${createdAt}</span>` : ''}
+                    <span>Người tạo: ${escapeHtml(owner)}</span>
+                    ${createdAt ? `<span>• Tải lên ${createdAt}</span>` : ''}
                   </div>
                 </div>
                 <span class="badge ${badge}">${statusLabel}</span>
@@ -180,10 +185,10 @@
               <footer class="resource-actions">
                 <div class="action-buttons">
                   <button class="btn btn-xs ghost" data-action="open" data-id="${res.id}">Xem</button>
-                  <button class="btn btn-xs" data-action="approve" data-id="${res.id}">Duy?t</button>
-                  <button class="btn btn-xs danger" data-action="reject" data-id="${res.id}">T? ch?i</button>
+                  <button class="btn btn-xs" data-action="approve" data-id="${res.id}">Duyệt</button>
+                  <button class="btn btn-xs danger" data-action="reject" data-id="${res.id}">Từ chối</button>
                   <button class="btn btn-xs border-stone-300" data-action="hide" data-id="${res.id}">${
-                    status === 'hidden' ? 'Hi?n th?' : '?n nhanh'
+                    status === 'hidden' ? 'Hiển thị' : 'Ẩn nhanh'
                   }</button>
                 </div>
               </footer>
@@ -225,7 +230,7 @@
       const uploadInfo = document.getElementById('uploadInfo');
       if (uploadInfo) {
         uploadInfo.textContent = state.form.fileInfo
-          ? `Ðã t?i: ${state.form.fileInfo.name || 'file'}`
+          ? `Đã tải: ${state.form.fileInfo.name || 'file'}`
           : '';
       }
       document.getElementById('fileFields').style.display = state.form.type === 'file' ? 'block' : 'none';
@@ -238,7 +243,7 @@
         setState({ courses: Array.isArray(list) ? list : [] });
       } catch (err) {
         setState({ courses: [] });
-        alert(err?.message || 'Không t?i du?c danh sách khóa h?c');
+        alert(err?.message || 'Không tải được danh sách khóa học');
       }
     }
 
@@ -261,7 +266,7 @@
         setState({ lessons, lessonsLoading: false });
       } catch {
         setState({ lessons: [], lessonsLoading: false });
-        alert('Không t?i du?c bài h?c.');
+        alert('Không tải được bài học.');
       }
     }
 
@@ -284,7 +289,7 @@
         setState({ resources: data, loading: false });
       } catch (err) {
         setState({ resources: [], loading: false });
-        alert(err?.message || 'Không t?i du?c tài li?u');
+        alert(err?.message || 'Không tải được tài liệu');
       }
     }
 
@@ -297,7 +302,7 @@
         });
         fetchResources();
       } catch (err) {
-        alert(err?.message || 'Không th? c?p nh?t tr?ng thái');
+        alert(err?.message || 'Không thể cập nhật trạng thái');
       }
     }
 
@@ -309,17 +314,17 @@
           const absolute = url.startsWith('http') ? url : `${location.origin}${url}`;
           window.open(absolute, '_blank');
         } else {
-          alert('Không tìm th?y du?ng d?n tài li?u');
+          alert('Không tìm thấy đường dẫn tài liệu');
         }
       } catch (err) {
-        alert(err?.message || 'Không th? m? tài li?u');
+        alert(err?.message || 'Không thể mở tài liệu');
       }
     }
 
     async function handleUpload(file) {
       if (!file) return;
       if (!token()) {
-        alert('C?n dang nh?p');
+        alert('Cần đăng nhập');
         return;
       }
       setForm({ uploading: true });
@@ -349,12 +354,12 @@
 
     async function submitResource() {
       if (!state.filterCourse || !state.filterLesson) {
-        alert('Ch?n khóa h?c và bài h?c tru?c khi t?i lên.');
+        alert('Chèn khóa học vào bài học trước khi tải lên.');
         return;
       }
       const title = state.form.title.trim();
       if (!title) {
-        alert('Nh?p tiêu d? tài li?u');
+        alert('Nhập tiêu đề tài liệu');
         return;
       }
       const body = {
@@ -365,16 +370,16 @@
       };
       if (state.form.type === 'file') {
         if (!state.form.storagePath || !state.form.url) {
-          alert('Hãy t?i t?p tru?c khi luu.');
+          alert('Hãy tiếp tục trước khi lưu.');
           return;
         }
         body.storagePath = state.form.storagePath;
         body.fileUrl = state.form.url;
-        body.fileType = state.form.fileInfo?.contentType;
+        body.fileType = truncateType(state.form.fileInfo?.contentType);
         body.fileSize = state.form.fileInfo?.size;
       } else {
         if (!state.form.externalUrl.trim()) {
-          alert('Nh?p du?ng d?n liên k?t');
+          alert('Nhập đường dẫn liên kết');
           return;
         }
         body.externalUrl = state.form.externalUrl.trim();
@@ -384,7 +389,7 @@
           method: 'POST',
           body: JSON.stringify(body),
         });
-        alert('Ðã thêm tài li?u (dang ch? duy?t).');
+        alert('Đã thêm tài liệu (đang chờ duyệt).');
         setForm({
           title: '',
           description: '',
@@ -398,7 +403,7 @@
         });
         fetchResources();
       } catch (err) {
-        alert(err?.message || 'Không th? thêm tài li?u');
+        alert(err?.message || 'Không thể thêm tài liệu');
       }
     }
 
@@ -449,35 +454,319 @@
     }
   </script>
   <style>
-    .hero-card { position:relative; overflow:hidden; border-radius:28px; padding:32px; background:linear-gradient(135deg, rgba(94,96,255,0.12), rgba(64,18,136,0.55)); border:1px solid rgba(148,163,184,0.25); box-shadow:0 25px 60px rgba(8,11,22,0.55); display:grid; gap:24px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
-    .hero-card::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 15% 20%, rgba(255,255,255,0.08), transparent 45%); pointer-events:none; }
-    .hero-card > * { position:relative; }
-    .hero-eyebrow { text-transform:uppercase; font-size:0.75rem; letter-spacing:0.3em; color:#c7d2fe; margin-bottom:10px; display:block; }
-    .hero-title { font-size: clamp(1.8rem, 3vw, 2.6rem); color:#fff; margin-bottom:12px; }
-    .hero-text { color:#e0e7ff; max-width:50ch; }
-    .hero-tags { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
-    .hero-tags span { background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.3); color:#f8fafc; padding:6px 12px; border-radius:999px; font-size:0.85rem; }
-    .hero-side { background:rgba(15,23,42,0.45); border:1px solid rgba(148,163,184,0.2); border-radius:22px; padding:20px; color:#f8fafc; }
-    .hero-checklist { list-style:none; padding:0; margin:12px 0 0; display:flex; flex-direction:column; gap:8px; }
-    .hero-checklist li { font-size:0.9rem; color:#e2e8f0; padding-left:20px; position:relative; }
-    .hero-checklist li::before { content:'•'; position:absolute; left:0; color:#a5b4fc; }
-    .hero-progress { margin-top:18px; display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; }
-    .hero-number { font-size:2.2rem; font-weight:600; color:#fff; display:block; }
-    .hero-note { color:#c7d2fe; margin:4px 0 0; }
+    .page-stats{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      margin-top:12px;
+    }
+    .page-stats .stat-pill{
+      min-width:140px;
+      padding:14px 18px;
+      border-radius:20px;
+      border:1px solid rgba(234,223,209,.85);
+      background:#fff;
+      box-shadow:var(--shadow-soft);
+    }
+    .page-stats .stat-pill span{
+      display:block;
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:var(--text-muted);
+    }
+    .page-stats .stat-pill strong{
+      display:block;
+      font-size:1.6rem;
+      margin-top:6px;
+      color:var(--accent-strong);
+    }
+    .section-heading{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .section-heading h2,
+    .section-heading h3{
+      margin:0;
+      color:var(--text);
+    }
+    .section-heading p{
+      margin:6px 0 0;
+      color:var(--text-muted);
+    }
+    .section-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .filter-grid{
+      display:grid;
+      gap:16px;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    }
+    .filter-grid label{
+      font-size:.85rem;
+      font-weight:600;
+      color:var(--text-muted);
+    }
+    .resource-layout{
+      display:grid;
+      gap:24px;
+    }
+    @media (min-width:1024px){
+      .resource-layout{grid-template-columns:1.2fr .8fr}
+    }
+    .resource-list{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .resource-item{
+      border:1px solid rgba(234,223,209,.9);
+      border-radius:20px;
+      padding:18px 20px;
+      background:#fffdf9;
+      box-shadow:0 18px 30px rgba(165,112,70,.12);
+    }
+    .resource-item header{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .resource-item h4{
+      margin:0;
+      font-size:1.05rem;
+      color:var(--text);
+    }
+    .resource-item .meta{
+      margin-top:6px;
+      font-size:.85rem;
+      color:var(--text-muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .resource-item footer{
+      margin-top:16px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .action-buttons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .badge-success{background:#ecfdf5;color:#047857;}
+    .badge-warning{background:#fff7ed;color:#c2410c;}
+    .badge-danger{background:#fee2e2;color:#b91c1c;}
+    .badge-ghost{background:#f1f5f9;color:#475569;}
+    .resource-form{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .resource-form .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .resource-form label{
+      font-size:.85rem;
+      font-weight:600;
+      color:var(--text-muted);
+    }
+    .resource-form textarea{
+      min-height:90px;
+      resize:vertical;
+    }
+    .form-note{
+      font-size:.8rem;
+      color:var(--text-muted);
+      margin:4px 0 0;
+    }
+    .upload-area{
+      border:1px dashed rgba(186,132,82,.5);
+      border-radius:16px;
+      padding:16px;
+      text-align:center;
+      cursor:pointer;
+      background:#fff9f3;
+      transition:border .2s ease,background .2s ease;
+    }
+    .upload-area:hover{
+      border-color:var(--accent);
+      background:#fff;
+    }
+    .tiny-note{font-size:.78rem;color:var(--text-muted);}
+  </style>
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <span class="eyebrow">Không gian giảng viên</span>
+        <strong>Tài liệu bài học</strong>
+        <p class="muted">Theo dõi tài nguyên từng bài học, duyệt yêu cầu và tải lên tài liệu mới cho học viên.</p>
+      </div>
+      <div id="adminUserCard" class="admin-user-card"></div>
+      <nav id="adminMenu" class="admin-menu"></nav>
+      <div class="admin-sidebar-footer">
+        <a class="text-link" href="/app/index.html">← Về trang tổng quan</a>
+      </div>
+    </aside>
 
-    .filters-card { position:relative; background: radial-gradient(circle at top left, rgba(99,102,241,0.2), rgba(15,23,42,0.95)); border: 1px solid rgba(148,163,184,0.25); box-shadow: 0 20px 50px rgba(10,12,25,0.45); border-radius: 24px; padding: 20px; overflow:hidden; }
-    .filters-card::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05), transparent 50%); pointer-events:none; }
-    .filters-card .input { background:rgba(15,23,42,0.65); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; }
-    .filters-card select.input option { color:#0f172a; }
+    <div class="admin-main">
+      <div id="nav" data-variant="compact"></div>
+      <main class="admin-content page-shell">
+        <header class="page-header">
+          <span class="eyebrow">Studio giảng viên</span>
+          <h1>Kho tài liệu bài học</h1>
+          <p>Tập trung những file quan trọng cho từng bài giảng, lọc nhanh theo khóa và trạng thái để xử lý trong vài cú click.</p>
+          <div class="page-stats">
+            <div class="stat-pill">
+              <span>Đang chờ</span>
+              <strong id="summaryHeroPending">0</strong>
+            </div>
+            <div class="stat-pill">
+              <span>Đã duyệt</span>
+              <strong id="summaryHeroApproved">0</strong>
+            </div>
+          </div>
+        </header>
 
-    .summary-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
-    .stat-card { border-radius:22px; padding:18px; background:rgba(15,23,42,0.85); border:1px solid rgba(148,163,184,0.2); color:#e2e8f0; box-shadow:0 20px 45px rgba(15,23,42,0.45); }
-    .stat-value { font-size:1.8rem; font-weight:600; color:#fefefe; margin-top:4px; }
+        <section class="metric-grid">
+          <div class="metric-card">
+            <span>Tổng tài liệu</span>
+            <strong id="summaryTotal">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Đang chờ</span>
+            <strong id="summaryPending">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Đã duyệt</span>
+            <strong id="summaryApproved">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Từ chối</span>
+            <strong id="summaryRejected">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Đang ẩn</span>
+            <strong id="summaryHidden">0</strong>
+          </div>
+        </section>
 
-    .resource-layout { display:grid; gap:20px; }
-    @media (min-width: 1024px) { .resource-layout { grid-template-columns: 1.5fr 1fr; } }
+        <section class="section-card">
+          <header class="section-heading">
+            <div>
+              <h2>Bộ lọc tài liệu</h2>
+              <p class="small">Chọn khóa, bài và trạng thái để hiển thị đúng nội dung cần xử lý.</p>
+            </div>
+            <div class="section-actions">
+              <button id="btnApply" class="btn">Lọc kết quả</button>
+              <button id="btnRefresh" class="btn ghost">Làm mới</button>
+            </div>
+          </header>
+          <div class="filter-grid">
+            <div>
+              <label for="filterCourse">Khóa học</label>
+              <select id="filterCourse" class="input"></select>
+              <p id="lessonLoadingHint" class="tiny-note"></p>
+            </div>
+            <div>
+              <label for="filterLesson">Bài học</label>
+              <select id="filterLesson" class="input">
+                <option value="">Chọn khóa học trước</option>
+              </select>
+            </div>
+            <div>
+              <label for="filterStatus">Trạng thái</label>
+              <select id="filterStatus" class="input">
+                <option value="">Tất cả</option>
+                <option value="pending">Đang chờ</option>
+                <option value="approved">Đã duyệt</option>
+                <option value="rejected">Từ chối</option>
+                <option value="hidden">Đang ẩn</option>
+              </select>
+            </div>
+          </div>
+        </section>
 
-    .resource-card { border-radius: 18px; border: 1px solid rgba(148,163,184,0.25); padding: 20px; background: #fff; box-shadow: 0 15px 40px rgba(15,23,42,0.15); }
-    .resource-header { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .resource-title { font-size:1.
+        <section class="resource-layout">
+          <div class="section-card">
+            <header class="section-heading">
+              <div>
+                <h3>Danh sách tài liệu</h3>
+                <p class="small">Cập nhật khi thay đổi bộ lọc.</p>
+              </div>
+            </header>
+            <div id="resourceList" class="resource-list">
+              <div class="empty">Chọn khóa học và bài học để xem tài liệu.</div>
+            </div>
+          </div>
 
+          <div class="section-card resource-form">
+            <header class="section-heading">
+              <div>
+                <h3>Thêm tài liệu</h3>
+                <p class="small">Upload nhanh file mới hoặc dán liên kết.</p>
+              </div>
+            </header>
+            <div class="field">
+              <label for="formTitle">Tiêu đề</label>
+              <input id="formTitle" class="input" placeholder="VD: Slide bài 3" />
+            </div>
+            <div class="field">
+              <label for="formDescription">Mô tả</label>
+              <textarea id="formDescription" class="input" placeholder="Mô tả ngắn gọn nội dung tài liệu"></textarea>
+            </div>
+            <div class="filter-grid">
+              <div class="field">
+                <label for="formType">Hình thức</label>
+                <select id="formType" class="input">
+                  <option value="file">Tệp tải lên</option>
+                  <option value="link">Liên kết ngoài</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="formVisibility">Phạm vi hiển thị</label>
+                <select id="formVisibility" class="input">
+                  <option value="enrolled">Học viên đã ghi danh</option>
+                  <option value="public">Công khai</option>
+                  <option value="instructors">Chỉ giảng viên</option>
+                </select>
+              </div>
+            </div>
+            <div id="fileFields" class="field" style="display:block;">
+              <label for="resourceFile">Tệp đính kèm</label>
+              <label class="upload-area">
+                <span>Tải tài liệu từ máy của bạn</span>
+                <input id="resourceFile" type="file" />
+              </label>
+              <p id="uploadInfo" class="form-note"></p>
+            </div>
+            <div id="linkFields" class="field" style="display:none;">
+              <label for="formExternal">Đường dẫn</label>
+              <input id="formExternal" class="input" type="url" placeholder="https://..." />
+              <p class="form-note">Đảm bảo người học có quyền truy cập liên kết này.</p>
+            </div>
+            <button id="btnSubmitResource" class="btn" type="button">Đăng tài liệu</button>
+            <p class="form-note">Nhớ chọn khóa học & bài học trước khi lưu.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+  </div>
+</body>
+</html>

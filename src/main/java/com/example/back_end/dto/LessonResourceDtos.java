@@ -48,6 +48,7 @@ public class LessonResourceDtos {
         public SimpleUser createdBy;
         public LocalDateTime createdAt;
         public LocalDateTime updatedAt;
+        public String downloadUrl;
     }
 
     public static class SimpleUser {

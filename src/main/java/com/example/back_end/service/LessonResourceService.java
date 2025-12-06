@@ -74,6 +74,32 @@ public class LessonResourceService {
         return toDto(resourceRepository.save(resource));
     }
 
+    @Transactional(readOnly = true)
+    public List<LessonResourceDtos.ResourceResponse> listPublicResources(Long courseId, Long lessonId) {
+        if (courseId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thi\u1EBFu kh\u00F3a h\u1ECDc");
+        }
+        List<LessonResource> resources;
+        if (lessonId != null) {
+            assertLessonInCourse(courseId, lessonId);
+            resources = resourceRepository
+                    .findByCourse_IdAndLesson_IdAndVisibilityIgnoreCaseAndStatusIgnoreCaseOrderByCreatedAtDesc(
+                            courseId,
+                            lessonId,
+                            "public",
+                            "approved"
+                    );
+        } else {
+            resources = resourceRepository
+                    .findByCourse_IdAndVisibilityIgnoreCaseAndStatusIgnoreCaseOrderByCreatedAtDesc(
+                            courseId,
+                            "public",
+                            "approved"
+                    );
+        }
+        return resources.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Transactional
     public LessonResourceDtos.ResourceResponse update(User user, Long resourceId, LessonResourceDtos.UpdateRequest request) {
         LessonResource resource = resourceRepository.findById(resourceId)
@@ -262,6 +288,7 @@ public class LessonResourceService {
         dto.downloadCount = resource.getDownloadCount();
         dto.createdAt = resource.getCreatedAt();
         dto.updatedAt = resource.getUpdatedAt();
+        dto.downloadUrl = resolveDownloadUrl(resource);
         if (resource.getCreatedBy() != null) {
             LessonResourceDtos.SimpleUser user = new LessonResourceDtos.SimpleUser();
             user.id = resource.getCreatedBy().getId();
@@ -270,6 +297,17 @@ public class LessonResourceService {
             dto.createdBy = user;
         }
         return dto;
+    }
+
+    private String resolveDownloadUrl(LessonResource resource) {
+        if (resource == null) return null;
+        if ("link".equalsIgnoreCase(resource.getSourceType()) && StringUtils.hasText(resource.getExternalUrl())) {
+            return resource.getExternalUrl();
+        }
+        if (StringUtils.hasText(resource.getFileUrl())) {
+            return resource.getFileUrl();
+        }
+        return buildUrlFromStorage(resource.getStoragePath());
     }
 
     private void assertLessonInCourse(Long courseId, Long lessonId) {

@@ -5,6 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Tạo khóa học (Giảng viên)</title>
   <link rel="stylesheet" href="/app/app.css"/>
+  <style>
+    .create-trigger{
+      margin-bottom:16px;
+      display:flex;
+      justify-content:flex-start;
+    }
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      padding:40px 24px;
+      z-index:120;
+    }
+    .modal.is-active{display:flex;}
+    .modal-backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(8,10,20,0.55);
+      backdrop-filter:blur(5px);
+    }
+    .modal-panel{
+      position:relative;
+      width:100%;
+      max-width:980px;
+      max-height:90vh;
+      overflow-y:auto;
+      background:radial-gradient(circle at top,#fffdf9,#f0e1d4 80%);
+      border-radius:32px;
+      padding:28px;
+      box-shadow:0 35px 80px rgba(20,8,2,0.35);
+      border:1px solid rgba(255,255,255,0.4);
+    }
+    .modal-close{
+      position:sticky;
+      top:0;
+      margin-left:auto;
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      border:none;
+      background:rgba(0,0,0,0.08);
+      color:#5c3a27;
+      font-size:1.2rem;
+      cursor:pointer;
+    }
+  </style>
   <script type="module">
     import {mountNav, mountAdminMenu, mountAdminUser, api, token, requireAuth, qs} from '/app/app-common.js';
     const el = id => document.getElementById(id);
@@ -334,11 +382,29 @@
         priceInput.addEventListener('input', updateCreatePriceHint);
         updateCreatePriceHint();
       }
+      const modal = document.getElementById('createModal');
+      const openModalBtn = document.getElementById('openCreateModal');
+      const closeModalBtn = document.getElementById('closeCreateModal');
+      const backdrop = modal?.querySelector('.modal-backdrop');
+      const openModal = () => {
+        if(!modal) return;
+        modal.classList.add('is-active');
+        modal.setAttribute('aria-hidden','false');
+      };
+      const closeModal = () => {
+        if(!modal) return;
+        modal.classList.remove('is-active');
+        modal.setAttribute('aria-hidden','true');
+      };
+      openModalBtn?.addEventListener('click', openModal);
+      closeModalBtn?.addEventListener('click', closeModal);
+      backdrop?.addEventListener('click', closeModal);
 
       const cid = Number(qs('id'));
       if(cid){
         showEditor(cid);
         el('msg').textContent = `BẠN ĐÃ TẠO KHÓA HỌC ID=${cid}`;
+        openModal();
       }
     });
   </script>
@@ -364,65 +430,74 @@
           <p class="muted">Bắt đầu từ thông tin nền tảng</p>
           <h1>Tạo khóa học</h1>
         </div>
-        <div class="card">
-          <h2>Tạo khóa học (Giảng viên)</h2>
-          <div class="cols">
-            <input id="title" placeholder="Tiêu đề"/>
-            <input id="slug" placeholder="Slug duy nhất"/>
-            <input id="short" placeholder="Mô tả ngắn"/>
-            <label for="lang" class="muted">Ngôn ngữ</label>
-            <select id="lang" aria-label="Ngôn ngữ hiển thị">
-              <option value="vi">vi</option>
-              <option value="en">en</option>
-            </select>
-            <div class="field">
-              <label for="level">Trình độ mục tiêu</label>
-              <select id="level" aria-label="Chọn trình độ mục tiêu">
-                <option value="">Chọn mức TOEIC</option>
-                <option value="350+">350+ - Nền tảng</option>
-                <option value="450+">450+ - Sơ trung cấp</option>
-                <option value="550+">550+ - Trung cấp</option>
-                <option value="650+">650+ - Trung cao</option>
-                <option value="750+">750+ - Nâng cao</option>
-                <option value="850+">850+ - Chuyên sâu</option>
-                <option value="950+">950+ - Master</option>
-              </select>
-              <small class="muted">Phân loại theo điểm 350+ đến tối đa.</small>
-            </div>
-            <div class="field" style="grid-column:1 / -1">
-              <span>Nhóm người học</span>
-              <div id="roleChips" class="role-chip-row"></div>
-              <small id="roleSummary" class="muted">Chọn nhóm người học phù hợp (có thể chọn nhiều)</small>
-            </div>
-            <div class="field" style="grid-column:1 / -1">
-              <span>Chuyên đề tiếng Anh</span>
-              <div id="categoryChips" class="role-chip-row"></div>
-              <small id="categorySummary" class="muted">Chọn chuyên đề trọng tâm cho khóa học</small>
-            </div>
-            <div class="field">
-              <span>Giá?</span>
-              <input id="price" placeholder="Giá"/>
-              <small id="createPriceHint" class="muted"></small>
-            </div>
-            <div>
-              <label>Thumbnail: <input type="file" id="thumb" accept="image/*"/></label>
-            </div>
-          </div>
-          <div class="row" style="margin-top:12px">
-            <button id="createBtn" class="btn">Tạo</button>
-            <button id="submitBtn" class="btn ghost" disabled>Gửi chờ duyệt</button>
-            <span id="msg" class="muted"></span>
-          </div>
-          <p class="muted" style="margin-top:8px">Cần đăng nhập (teacher/manager) – file lưu tại /uploads/…</p>
+        <div class="create-trigger">
+          <button id="openCreateModal" class="btn">+ Bắt đầu tạo khóa học</button>
         </div>
-        <div class="card" id="editor" style="display:none">
-          <h2>Biên soạn chi tiết (Course ID: <span id="cid"></span>)</h2>
-          <div class="row">
-            <input id="mTitle" placeholder="Tiêu đề phần"/>
-            <input id="mSort" placeholder="Thứ tự" style="width:120px"/>
-            <button id="addModuleBtn" class="btn ghost">Thêm phần</button>
+        <div class="modal" id="createModal" aria-hidden="true">
+          <div class="modal-backdrop"></div>
+          <div class="modal-panel">
+            <button class="modal-close" id="closeCreateModal" aria-label="Đóng">&times;</button>
+            <div class="card">
+              <h2>Tạo khóa học (Giảng viên)</h2>
+              <div class="cols">
+                <input id="title" placeholder="Tiêu đề"/>
+                <input id="slug" placeholder="Slug duy nhất"/>
+                <input id="short" placeholder="Mô tả ngắn"/>
+                <label for="lang" class="muted">Ngôn ngữ</label>
+                <select id="lang" aria-label="Ngôn ngữ hiển thị">
+                  <option value="vi">vi</option>
+                  <option value="en">en</option>
+                </select>
+                <div class="field">
+                  <label for="level">Trình độ mục tiêu</label>
+                  <select id="level" aria-label="Chọn trình độ mục tiêu">
+                    <option value="">Chọn mức TOEIC</option>
+                    <option value="350+">350+ - Nền tảng</option>
+                    <option value="450+">450+ - Sơ trung cấp</option>
+                    <option value="550+">550+ - Trung cấp</option>
+                    <option value="650+">650+ - Trung cao</option>
+                    <option value="750+">750+ - Nâng cao</option>
+                    <option value="850+">850+ - Chuyên sâu</option>
+                    <option value="950+">950+ - Master</option>
+                  </select>
+                  <small class="muted">Phân loại theo điểm 350+ đến tối đa.</small>
+                </div>
+                <div class="field" style="grid-column:1 / -1">
+                  <span>Nhóm người học</span>
+                  <div id="roleChips" class="role-chip-row"></div>
+                  <small id="roleSummary" class="muted">Chọn nhóm người học phù hợp (có thể chọn nhiều)</small>
+                </div>
+                <div class="field" style="grid-column:1 / -1">
+                  <span>Chuyên đề tiếng Anh</span>
+                  <div id="categoryChips" class="role-chip-row"></div>
+                  <small id="categorySummary" class="muted">Chọn chuyên đề trọng tâm cho khóa học</small>
+                </div>
+                <div class="field">
+                  <span>Giá?</span>
+                  <input id="price" placeholder="Giá"/>
+                  <small id="createPriceHint" class="muted"></small>
+                </div>
+                <div>
+                  <label>Thumbnail: <input type="file" id="thumb" accept="image/*"/></label>
+                </div>
+              </div>
+              <div class="row" style="margin-top:12px">
+                <button id="createBtn" class="btn">Tạo</button>
+                <button id="submitBtn" class="btn ghost" disabled>Gửi chờ duyệt</button>
+                <span id="msg" class="muted"></span>
+              </div>
+              <p class="muted" style="margin-top:8px">Cần đăng nhập (teacher/manager) – file lưu tại /uploads/…</p>
+            </div>
+            <div class="card" id="editor" style="display:none">
+              <h2>Biên soạn chi tiết (Course ID: <span id="cid"></span>)</h2>
+              <div class="row">
+                <input id="mTitle" placeholder="Tiêu đề phần"/>
+                <input id="mSort" placeholder="Thứ tự" style="width:120px"/>
+                <button id="addModuleBtn" class="btn ghost">Thêm phần</button>
+              </div>
+              <div id="editorBody" style="margin-top:16px"></div>
+            </div>
           </div>
-          <div id="editorBody" style="margin-top:16px"></div>
         </div>
       </main>
     </div>

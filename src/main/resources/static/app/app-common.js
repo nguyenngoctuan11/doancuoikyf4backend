@@ -264,7 +264,7 @@ export function nav(variant = 'default') {
   return `
     <header class="topbar ${variant === 'compact' ? 'topbar-compact' : ''}">
       <div class="brand">
-        <div class="brand-dot"></div>
+        <div class="brand-dot" aria-label="F4">F4</div>
         <div>
           <div>LMS Admin</div>
           <small class="muted">Không gian quản trị</small>

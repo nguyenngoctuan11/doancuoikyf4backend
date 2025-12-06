@@ -18,6 +18,21 @@ public interface LessonResourceRepository extends JpaRepository<LessonResource, 
     List<LessonResource> findByCourse_IdOrderByCreatedAtDesc(Long courseId);
 
     @EntityGraph(attributePaths = {"createdBy", "lesson", "course"})
+    List<LessonResource> findByCourse_IdAndVisibilityIgnoreCaseAndStatusIgnoreCaseOrderByCreatedAtDesc(
+            Long courseId,
+            String visibility,
+            String status
+    );
+
+    @EntityGraph(attributePaths = {"createdBy", "lesson", "course"})
+    List<LessonResource> findByCourse_IdAndLesson_IdAndVisibilityIgnoreCaseAndStatusIgnoreCaseOrderByCreatedAtDesc(
+            Long courseId,
+            Long lessonId,
+            String visibility,
+            String status
+    );
+
+    @EntityGraph(attributePaths = {"createdBy", "lesson", "course"})
     @Query("SELECT lr FROM LessonResource lr " +
             "LEFT JOIN lr.course c " +
             "LEFT JOIN lr.lesson l " +
